@@ -18,42 +18,14 @@ RUN set -ex \
     gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
   done
 
-#set environment
-ENV NODE_VERSION 10.14.0
-ENV NODE_PATH="/usr/local/share/.config/yarn/global/node_modules:${NODE_PATH}"
-ENV PATH="/usr/local/bin/dumb-init-1.2.0/:${PATH}"
-
-RUN buildDeps='xz-utils' \
-    && ARCH= && dpkgArch="$(dpkg --print-architecture)" \
-    && case "${dpkgArch##*-}" in \
-      amd64) ARCH='x64';; \
-      ppc64el) ARCH='ppc64le';; \
-      s390x) ARCH='s390x';; \
-      arm64) ARCH='arm64';; \
-      armhf) ARCH='armv7l';; \
-      i386) ARCH='x86';; \
-      *) echo "unsupported architecture"; exit 1 ;; \
-    esac \
-    && set -x \
-    && apt-get update && apt-get install -y ca-certificates curl wget $buildDeps --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
-    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-    && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-    && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
-    && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 #puppeteer & chromium install 
-RUN apt-get update && apt-get install -yq xz-utils wget \
-chromium-browser && wget https://github.com/Yelp/dumb-init/files/923795/dumb-init-compile.zip && \
-apt-get install -yq unzip && \
-unzip dumb-init-compile.zip -d /usr/local/bin/ && \
-chmod +x /usr/local/bin/dumb-init-1.2.0/dumb-init
+RUN apt-get update && apt-get install -yq chromium-browser
+RUN apt-get install -y curl gnupg
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash
+RUN apt-get install -y nodejs
 
 RUN apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-RUN npm install puppeteer
 
 # Add user so we don't need --no-sandbox.
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
@@ -63,8 +35,15 @@ RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
 # Run everything after as non-privileged user.
 USER pptruser
 
+# Set puppeteer env variables
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=TRUE
 
-ENTRYPOINT ["dumb-init", "--"]
+RUN npm install -g puppeteer
 
-CMD ["node"]
+WORKDIR /home/pptruser
+#ENV NODE_ENV=production
+#ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+COPY . .
 
+CMD ["node", 'examples/example.js']
