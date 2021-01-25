@@ -1,11 +1,6 @@
-# armv7/docker-puppeter
-DockerHub:https://hub.docker.com/r/supernisor/armv7-puppeteer
-The docker image is for container to run puppeteer instantly .
-This is for the docker run script using puppeteer with current version:
-  - Base Image : ubuntu 16.04 for armv7
-  - Chromium-browser 74.0.3729
-  - NodeJs : 10.14.0 
-  - puppeteeer : 1.10.0
+# arm7-chrome
+DockerHub:https://hub.docker.com/r/aemilianmayrhofer/arm7-chrome
+The docker image runs on ARM7 machines and includes a chromium-browser installation as well as a chrome user.
 
 ```
 //make sure the current core is based on armv7 
@@ -17,12 +12,12 @@ uname -a
   - Build by this DockerFile or pull the image
   
   ```sh
-  docker pull supernisor/armv7-puppeteer
+  docker pull aemilianmayrhofer/arm7-chrome
   ```
-  - Add executablePath:'/usr/bin/chromium-browser'
-  - using the base commands  :
+  - Add executablePath:'/usr/bin/chromium-browser' or don't set any executablePath
+  - using the base commands:
   ```sh 
-  docker run -it -v "examples/example.js:/home/pptruser/example.js" aemilianmayrhofer/armv7-puppeteer node example.js 
+  docker run -d -p 9222:9222 --cap-add=SYS_ADMIN aemilianmayrhofer/arm7-chrome:latest 
   ```
 
 ### example.js 
@@ -42,4 +37,6 @@ const puppeteer = require('puppeteer');
     await browser.close();
 })();
 ```
+
+https://www.henry.wang/2019/12/05/arm-dockerhub.html
 
