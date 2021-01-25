@@ -22,7 +22,7 @@ uname -a
   - Add executablePath:'/usr/bin/chromium-browser'
   - using the base commands  :
   ```sh 
-  docker run -i -t -v "script path:/home/pptruser/path" supernisor/armv7-puppeteer node example.js 
+  docker run -it -v "examples/example.js:/home/pptruser/example.js" aemilianmayrhofer/armv7-puppeteer node example.js 
   ```
 
 ### example.js 
@@ -39,7 +39,7 @@ const puppeteer = require('puppeteer');
     });
     const page = await browser.newPage();
     await page.goto('https://www.google.com/', {waitUntil: 'networkidle2'});
-    browser.close();
+    await browser.close();
 })();
 ```
 
